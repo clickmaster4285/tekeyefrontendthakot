@@ -1,5 +1,21 @@
 import { ROUTES } from "@/routes/config"
 
+const SEIZURE_MGMT_EXACT_PATHS = [
+  ROUTES.SEIZURE_MANAGEMENT,
+  ROUTES.SEIZURE_MGMT_NOTE_SHEET,
+  ROUTES.SEIZURE_MGMT_NOTE_SHEET_CREATE,
+  ROUTES.SEIZURE_MGMT_ASSESSMENT,
+  ROUTES.SEIZURE_MGMT_DETENTION_REPORTING,
+  ROUTES.SEIZURE_MGMT_RECOVERY_MEMO,
+  ROUTES.SEIZURE_MGMT_RECOVERY_MEMO_CREATE,
+  ROUTES.SEIZURE_MGMT_RECOVERY_REPORTING,
+  ROUTES.SEIZURE_MGMT_SEIZURE_REPORT,
+  ROUTES.SEIZURE_MGMT_SEIZURE_REPORT_CREATE,
+  ROUTES.SEIZURE_MGMT_REPORTS,
+] as const
+
+const SEIZURE_MGMT_PATH_PATTERN = /^\/seizure-management(\/.*)?$/
+
 export type RestrictedRole =
   | "RECEPTIONIST"
   | "GUARD"
@@ -172,17 +188,21 @@ const ROLE_PATH_RULES: Record<RestrictedRole, PathRule> = {
       ROUTES.EXPORT_CENTER,
       ROUTES.HS_CODES_FILE,
       ROUTES.SEIZED_INVENTORY,
+      ...SEIZURE_MGMT_EXACT_PATHS,
     ],
     patterns: [
       /^\/deposit-account-register\/[^/]+$/,
       /^\/detention-memo\/create$/,
       /^\/detention-memo\/[^/]+$/,
+      /^\/seizure-management\/detention-memo\/create$/,
+      /^\/seizure-management\/detention-memo\/[^/]+$/,
       /^\/seized-inventory\/[^/]+$/,
       /^\/goods-receipt\/[^/]+$/,
       /^\/stock-management\/[^/]+$/,
       /^\/cycle-counting-audit\/[^/]+$/,
       /^\/inventory-valuation\/[^/]+$/,
       /^\/destruction\/[^/]+$/,
+      SEIZURE_MGMT_PATH_PATTERN,
     ],
   },
   WAREHOUSE_IN_CHARGE: {
@@ -232,12 +252,15 @@ const ROLE_PATH_RULES: Record<RestrictedRole, PathRule> = {
       ROUTES.INVENTORY_VALUATION,
       ROUTES.ITEM_VALUATION,
       ROUTES.STOCK_MANAGEMENT,
+      ...SEIZURE_MGMT_EXACT_PATHS,
     ],
     patterns: [
       /^\/detention-memo\/[^/]+$/,
+      /^\/seizure-management\/detention-memo\/[^/]+$/,
       /^\/seized-inventory\/[^/]+$/,
       /^\/goods-receipt\/[^/]+$/,
       /^\/inventory-valuation\/[^/]+$/,
+      SEIZURE_MGMT_PATH_PATTERN,
     ],
   },
   STOCK_CONTROLLER: {
@@ -308,11 +331,14 @@ const ROLE_PATH_RULES: Record<RestrictedRole, PathRule> = {
       ROUTES.VEHICLE_TRACKING,
       ROUTES.CONTRACTOR_PASSES,
       ROUTES.CARGO_DELIVERY_LOGS,
+      ...SEIZURE_MGMT_EXACT_PATHS,
     ],
     patterns: [
       /^\/deposit-account-register\/[^/]+$/,
       /^\/detention-memo\/create$/,
       /^\/detention-memo\/[^/]+$/,
+      /^\/seizure-management\/detention-memo\/create$/,
+      /^\/seizure-management\/detention-memo\/[^/]+$/,
       /^\/seized-inventory\/[^/]+$/,
       /^\/goods-receipt\/[^/]+$/,
       /^\/stock-management\/[^/]+$/,
@@ -320,6 +346,7 @@ const ROLE_PATH_RULES: Record<RestrictedRole, PathRule> = {
       /^\/inventory-valuation\/[^/]+$/,
       /^\/visitors\/[^/]+$/,
       /^\/destruction\/[^/]+$/,
+      SEIZURE_MGMT_PATH_PATTERN,
     ],
   },
   IT_ADMIN: {
@@ -332,6 +359,12 @@ const ROLE_PATH_RULES: Record<RestrictedRole, PathRule> = {
       ROUTES.EDIT_USER,
       ROUTES.LOGS,
       ROUTES.ACTIVITY_LOGS,
+      // Attendance APIs use IsAdminOrHR (includes IT_ADMIN)
+      ROUTES.ATTENDANCE,
+      ROUTES.FACE_ENROLLMENT,
+      ROUTES.ATTENDANCE_MONITOR,
+      ROUTES.ATTENDANCE_DASHBOARD,
+      ROUTES.ATTENDANCE_REPORTS,
     ],
     patterns: [
       /^\/settings\/users\/[^/]+$/,
@@ -366,15 +399,18 @@ const ROLE_PATH_RULES: Record<RestrictedRole, PathRule> = {
       ROUTES.INCIDENT_CREATION,
       ROUTES.LOGS,
       ROUTES.ACTIVITY_LOGS,
+      ...SEIZURE_MGMT_EXACT_PATHS,
     ],
     patterns: [
       /^\/detention-memo\/[^/]+$/,
+      /^\/seizure-management\/detention-memo\/[^/]+$/,
       /^\/seized-inventory\/[^/]+$/,
       /^\/goods-receipt\/[^/]+$/,
       /^\/stock-management\/[^/]+$/,
       /^\/cycle-counting-audit\/[^/]+$/,
       /^\/inventory-valuation\/[^/]+$/,
       /^\/visitors\/[^/]+$/,
+      SEIZURE_MGMT_PATH_PATTERN,
     ],
   },
   HR: {
@@ -382,6 +418,10 @@ const ROLE_PATH_RULES: Record<RestrictedRole, PathRule> = {
       ROUTES.EMPLOYEES,
       ROUTES.ADD_STAFF,
       ROUTES.ATTENDANCE,
+      ROUTES.FACE_ENROLLMENT,
+      ROUTES.ATTENDANCE_MONITOR,
+      ROUTES.ATTENDANCE_DASHBOARD,
+      ROUTES.ATTENDANCE_REPORTS,
       ROUTES.LEAVE_MANAGEMENT,
       ROUTES.PAYROLL,
       ROUTES.RECRUITMENT,

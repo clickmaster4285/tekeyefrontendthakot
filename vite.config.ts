@@ -24,7 +24,8 @@ function ensureDistIconPlugin() {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, projectRoot, "")
-  const devProxyTarget = env.VITE_DEV_API_PROXY_TARGET?.trim()
+  const apiBase = env.VITE_API_BASE_URL?.trim()
+  const devProxyTarget = apiBase ? undefined : "http://127.0.0.1:8000"
 
   return {
   root: projectRoot,
@@ -34,7 +35,12 @@ export default defineConfig(({ mode }) => {
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["pakistan-customs-logo.png", "icon.svg"],
+      includeAssets: [
+        "pakistan-customs-logo.png",
+        "icon.svg",
+        "models/blazeface/model.json",
+        "models/blazeface/group1-shard1of1.bin",
+      ],
       manifest: {
         name: "Pakistan Customs — Secure Access Portal",
         short_name: "Customs Portal",
@@ -64,7 +70,7 @@ export default defineConfig(({ mode }) => {
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,jpg,jpeg}"],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,jpg,jpeg,bin,json}"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api/, /^\/_/],
         cleanupOutdatedCaches: true,

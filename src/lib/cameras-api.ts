@@ -80,7 +80,12 @@ export type CameraRecord = {
   is_active: boolean;
   ml_enabled: boolean;
   is_rtsp: boolean;
-  stream_path: string;
+  ml_stream_key?: string;
+  ml_live_stream_url?: string;
+  raw_stream_url?: string;
+  /** @deprecated Use ml_live_stream_url — Django proxy removed */
+  stream_path?: string;
+  /** @deprecated Use ml_live_stream_url */
   ml_live_stream_path?: string;
   created_at?: string;
   updated_at?: string;
@@ -116,10 +121,15 @@ export type DetectionEvent = {
   label: string;
   employee_name?: string;
   personal_number?: string;
+  local_track_id?: number | null;
+  global_track_id?: number | null;
+  person_identity_id?: number | null;
+  person_qr?: string;
+  track_event?: string;
   confidence: number;
   bbox: [number, number, number, number];
   is_alert: boolean;
-    clip_status?: ClipStatus;
+  clip_status?: ClipStatus;
   clip_url?: string;
   created_at: string;
 };
@@ -167,11 +177,41 @@ export type StreamCameraMeta = {
   purpose_label: string;
   ml_enabled: boolean;
   is_rtsp: boolean;
-  stream_path: string;
+  ml_stream_key?: string;
+  ml_live_stream_url?: string;
+  raw_stream_url?: string;
+  /** @deprecated Use ml_live_stream_url */
+  stream_path?: string;
+  /** @deprecated Use ml_live_stream_url */
   ml_live_stream_path?: string;
 };
 
 const API = `${API_BASE_URL}/api`;
+
+export function getMlLiveMjpegUrl(
+  camera: Pick<CameraRecord, "id" | "ml_stream_key" | "ml_live_stream_url" | "ml_live_stream_path">
+): string | null {
+  const direct = (camera.ml_live_stream_url || "").trim();
+  if (direct) return direct;
+  return null;
+}
+
+export function getRawMjpegUrl(
+  camera: Pick<CameraRecord, "id" | "ml_stream_key" | "raw_stream_url">
+): string | null {
+  const direct = (camera.raw_stream_url || "").trim();
+  if (direct) return direct;
+  return null;
+}
+
+/** @deprecated Django MJPEG proxy removed — use getMlLiveMjpegUrl or getRawMjpegUrl */
+export function getCameraMjpegUrl(streamPath: string): string {
+  const base = API_BASE_URL.replace(/\/$/, "");
+  const path = streamPath.startsWith("/") ? streamPath : `/${streamPath}`;
+  const token = getStoredToken();
+  const qs = token ? `?token=${encodeURIComponent(token)}` : "";
+  return `${base}${path}${qs}`;
+}
 
 function parseList<T>(data: unknown): T[] {
   if (Array.isArray(data)) return data as T[];
@@ -191,20 +231,6 @@ function formatApiError(err: unknown, fallback: string): string {
       .join("; ");
   }
   return fallback;
-}
-
-export function getCameraMjpegUrl(streamPath: string): string {
-  const base = API_BASE_URL.replace(/\/$/, "");
-  const path = streamPath.startsWith("/") ? streamPath : `/${streamPath}`;
-  const token = getStoredToken();
-  const qs = token ? `?token=${encodeURIComponent(token)}` : "";
-  return `${base}${path}${qs}`;
-}
-
-export function getMlLiveMjpegUrl(camera: Pick<CameraRecord, "ml_live_stream_path">): string | null {
-  const path = (camera.ml_live_stream_path || "").trim();
-  if (!path) return null;
-  return getCameraMjpegUrl(path);
 }
 
 export function getPreviewMjpegUrl(nvrId: number, channel: number): string {
@@ -381,10 +407,16 @@ export async function fetchMlLiveDetections(cameraId: number): Promise<{
     confidence: number;
     bbox: [number, number, number, number];
     alert?: boolean;
+    track_id?: number | null;
+    person_qr?: string | null;
   }>;
   count: number;
+  frame_width?: number;
+  frame_height?: number;
+  display_width?: number;
+  display_height?: number;
 }> {
-  const res = await fetch(`${API}/cameras/${cameraId}/ml-live/detections/`, {
+  const res = await fetch(`${API}/cameras/${cameraId}/ml-live/detections/?save=false`, {
     headers: getAuthHeaders(),
     cache: "no-store",
   });
@@ -459,8 +491,8 @@ export async function fetchDetectionSummary(): Promise<DetectionSummary> {
 
 export async function fetchStreamCameras(): Promise<{
   cameras: StreamCameraMeta[];
-  ffmpeg_available: boolean;
   ml_service_enabled: boolean;
+  ml_service_public_url?: string;
 }> {
   const res = await fetch(`${API}/cameras/streams/`, {
     headers: getAuthHeaders(),
@@ -473,4 +505,116 @@ export async function fetchStreamCameras(): Promise<{
 /** Display label for camera source (no credentials exposed). */
 export function cameraSourceLabel(cam: Pick<CameraRecord, "site_name" | "nvr_name" | "channel" | "nvr_ip">): string {
   return `${cam.site_name} · ${cam.nvr_name} · Ch ${cam.channel}`;
+}
+
+export type PersonJourneySighting = {
+  camera_id: number;
+  camera_code: string;
+  camera_name: string;
+  site_code: string;
+  zone: string;
+  local_track_id: number | null;
+  global_track_id?: number | null;
+  started_at: string;
+  ended_at: string | null;
+  label: string;
+  snapshot_url?: string;
+  clip_status?: string;
+  snapshot_urls?: string[];
+};
+
+export type PersonJourney = {
+  qr_code_number: string;
+  person_type: string;
+  display_name: string;
+  staff_id: number | null;
+  visitor_id: number | null;
+  first_seen_at: string;
+  last_seen_at: string;
+  sightings_count: number;
+  snapshot_url?: string;
+  global_track_id?: number | null;
+  path: PersonJourneySighting[];
+};
+
+export async function fetchPersonJourney(qrCode: string): Promise<PersonJourney> {
+  const code = encodeURIComponent(qrCode.trim());
+  const res = await fetch(`${API}/cameras/persons/${code}/journey/`, {
+    headers: getAuthHeaders(),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Failed to load person journey (${res.status})`);
+  return res.json();
+}
+
+export type PersonIdentitySummary = {
+  qr_code_number: string;
+  person_type: string;
+  display_name: string;
+  staff_id: number | null;
+  visitor_id: number | null;
+  first_seen_at: string;
+  last_seen_at: string;
+  snapshot_url?: string;
+};
+
+export async function fetchPersonIdentities(limit = 50): Promise<{
+  count: number;
+  results: PersonIdentitySummary[];
+}> {
+  const res = await fetch(`${API}/cameras/persons/?limit=${limit}`, {
+    headers: getAuthHeaders(),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Failed to load persons (${res.status})`);
+  return res.json();
+}
+
+export type PlateCapture = {
+  timestamp: string;
+  camera_key: string;
+  plate_number: string;
+  det_conf: number;
+  ocr_conf: number;
+  plate_image: string;
+  frame_image: string;
+  accepted: boolean;
+};
+
+export type PlateCaptureSummary = {
+  anpr_cameras: number;
+  reads_today: number;
+  accepted_today: number;
+  unique_plates_today: number;
+  match_rate: number;
+  total_captures: number;
+};
+
+export async function fetchPlateCaptures(opts?: {
+  page?: number;
+  page_size?: number;
+  camera_key?: string;
+  q?: string;
+  cleanup?: boolean;
+}): Promise<{
+  count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  summary: PlateCaptureSummary;
+  cleanup?: { removed_rows: number; deleted_files: number };
+  results: PlateCapture[];
+}> {
+  const params = new URLSearchParams();
+  params.set("page", String(opts?.page ?? 1));
+  params.set("page_size", String(opts?.page_size ?? 25));
+  if (opts?.camera_key) params.set("camera_key", opts.camera_key);
+  if (opts?.q) params.set("q", opts.q);
+  if (opts?.cleanup === false) params.set("cleanup", "false");
+  const res = await fetch(`${API}/cameras/plate-captures/?${params.toString()}`, {
+    headers: getAuthHeaders(),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Failed to load plate captures (${res.status})`);
+  return res.json();
 }
