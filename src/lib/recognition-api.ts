@@ -71,7 +71,11 @@ export type CctvOverview = {
     name: string
     location?: string
     purpose?: string
+    purpose_label?: string
+    code?: string
+    status?: string
     is_active?: boolean
+    has_stream?: boolean
     runtime?: {
       running?: boolean
       connected?: boolean

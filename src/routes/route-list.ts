@@ -140,6 +140,7 @@ export const DASHBOARD_ROUTES: { index?: true; path?: string; page: string }[] =
   { path: toChildPath(ROUTES.PERSON_JOURNEY), page: "PersonJourney" },
   { path: "person-journey/:uuid", page: "PersonJourneyDetail" },
   { path: toChildPath(ROUTES.ANPR_SETTINGS), page: "AnprSettings" },
+  { path: toChildPath(ROUTES.ANPR_VEHICLE_TRACKING), page: "AnprVehicleTracking" },
   { path: toChildPath(ROUTES.ANOMALY_DETECTION), page: "AnomalyDetection" },
   // Reports
   { path: toChildPath(ROUTES.REPORTS), page: "Reports" },

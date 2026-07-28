@@ -82,6 +82,7 @@ export const ROUTES = {
   PERSON_JOURNEY: "/person-journey",
   PERSON_JOURNEY_DETAIL: "/person-journey/:uuid",
   ANPR_SETTINGS: "/anpr-settings",
+  ANPR_VEHICLE_TRACKING: "/anpr-vehicle-tracking",
   ANOMALY_DETECTION: "/anomaly-detection",
 
   // Detentions
@@ -373,145 +374,145 @@ const ALL_NAV_ITEMS: (NavItem | NavGroup)[] = [
       },
     ],
   },
-  {
-    label: "Warehouse Management", href: ROUTES.OPERATIONS_DASHBOARD,
-    children: [
-      {
-        label: "Dashboard", href: ROUTES.OPERATIONS_DASHBOARD,
-      },
+  // {
+  //   label: "Warehouse Management", href: ROUTES.OPERATIONS_DASHBOARD,
+  //   children: [
+  //     {
+  //       label: "Dashboard", href: ROUTES.OPERATIONS_DASHBOARD,
+  //     },
 
-      // {
-      //   label: "Detentions",
-      //   children: [
-      //     // { label: "Detention Memo", href: ROUTES.DETENTION_MEMO },
-      //     // { label: "Detention Memo", href: ROUTES.DETENTION_MEMO },
-      //   ],
-      // },
-      {
-        label: "Deposit Account",
-        children: [
-          { label: "Deposit Account Register", href: ROUTES.DEPOSIT_ACCOUNT_REGISTER },
-        ],
-      },
-
-
-      {
-        label: "Seizure & Receipt",
-        children: [
-          { label: "New Seizure Entry", href: ROUTES.NEW_SEIZURE_ENTRY },
-          { label: "Goods Receipt & Handover", href: ROUTES.GOODS_RECEIPT_HANDOVER },
-          { label: "AI Item Cataloging", href: ROUTES.AI_ITEM_CATALOGING },
-          // { label: "QR Code Generation", href: ROUTES.QR_CODE_GENERATION },
-          { label: "Seizure Register", href: ROUTES.SEIZURE_REGISTER },
-        ],
-      },
-      { label: "Destruction", href: ROUTES.DESTRUCTION },
-
-      {
-        label: "Warehouse",
-        children: [
-          { label: "Warehouse Setup", href: ROUTES.WAREHOUSE_SETUP },
-          { label: "Zone & Location", href: ROUTES.ZONE_LOCATION_MANAGEMENT },
-          { label: "Storage Allocation", href: ROUTES.STORAGE_ALLOCATION },
-          { label: "Stock Reconciliation", href: ROUTES.STOCK_RECONCILIATION },
-          { label: "Release Inventory", href: ROUTES.RELEASE_INVENTORY },
-          { label: "Camera Integration", href: ROUTES.CAMERA_INTEGRATION },
-        ],
-      },
-      {
-        label: "Inventory Management",
-        children: [
-          {
-            label: "Goods Receipt",
-            href: ROUTES.GOODS_RECEIPT,
-
-          },
-          {
-            label: "Stock Management",
-            href: ROUTES.STOCK_MANAGEMENT,
-
-          },
-          {
-            label: "Cycle Counting & Audit",
-            href: ROUTES.CYCLE_COUNTING,
-
-          },
-          {
-            label: "Inventory Valuation",
-            href: ROUTES.INVENTORY_VALUATION,
-          },
-        ],
-      },
-      {
-        label: "Transfers & Handover",
-        children: [
-          { label: "Inter-Collectorate Transfer", href: ROUTES.INTER_COLLECTORATE_TRANSFER },
-          { label: "Internal Movement", href: ROUTES.INTERNAL_MOVEMENT },
-          { label: "Handover Requests", href: ROUTES.HANDOVER_REQUESTS },
-          { label: "Double Authentication", href: ROUTES.DOUBLE_AUTHENTICATION },
-          { label: "Transfer Tracking", href: ROUTES.TRANSFER_TRACKING },
-        ],
-      },
-      {
-        label: "Perishable Management",
-        children: [
-          { label: "Perishable Register", href: ROUTES.PERISHABLE_REGISTER },
-          { label: "Expiry Tracking", href: ROUTES.EXPIRY_TRACKING },
-          { label: "Priority Disposal Queue", href: ROUTES.PRIORITY_DISPOSAL_QUEUE },
-          { label: "Destruction Orders", href: ROUTES.DESTRUCTION_ORDERS },
-          { label: "Lot Creation", href: ROUTES.LOT_CREATION },
-          { label: "Item Valuation", href: ROUTES.ITEM_VALUATION },
-        ],
-      },
+  //     // {
+  //     //   label: "Detentions",
+  //     //   children: [
+  //     //     // { label: "Detention Memo", href: ROUTES.DETENTION_MEMO },
+  //     //     // { label: "Detention Memo", href: ROUTES.DETENTION_MEMO },
+  //     //   ],
+  //     // },
+  //     {
+  //       label: "Deposit Account",
+  //       children: [
+  //         { label: "Deposit Account Register", href: ROUTES.DEPOSIT_ACCOUNT_REGISTER },
+  //       ],
+  //     },
 
 
-      {
-        label: "Download Reports",
-        children: [
-          { label: "Standard Reports", href: ROUTES.STANDARD_REPORTS },
-          { label: "Custom Report Builder", href: ROUTES.CUSTOM_REPORT_BUILDER },
-          { label: "Export Center", href: ROUTES.EXPORT_CENTER },
-        ],
-      },
-      { label: "HS Codes file", href: ROUTES.HS_CODES_FILE },
+  //     {
+  //       label: "Seizure & Receipt",
+  //       children: [
+  //         { label: "New Seizure Entry", href: ROUTES.NEW_SEIZURE_ENTRY },
+  //         { label: "Goods Receipt & Handover", href: ROUTES.GOODS_RECEIPT_HANDOVER },
+  //         { label: "AI Item Cataloging", href: ROUTES.AI_ITEM_CATALOGING },
+  //         // { label: "QR Code Generation", href: ROUTES.QR_CODE_GENERATION },
+  //         { label: "Seizure Register", href: ROUTES.SEIZURE_REGISTER },
+  //       ],
+  //     },
+  //     { label: "Destruction", href: ROUTES.DESTRUCTION },
 
-    ],
-  },
-  {
-    label: "Seizure Management",
-    overviewHref: ROUTES.SEIZURE_MANAGEMENT,
-    children: [
-      { label: "Dashboard", href: ROUTES.SEIZURE_MANAGEMENT },
-      {
-        label: "Note Sheet",
-        children: [
-          { label: "Note Sheets", href: ROUTES.SEIZURE_MGMT_NOTE_SHEET },
-        ],
-      },
-      {
-        label: "Detention",
-        children: [
-          { label: "New Detention Memo", href: ROUTES.DETENTION_MEMO },
-          { label: "Assessment", href: ROUTES.SEIZURE_MGMT_ASSESSMENT },
-          { label: "Reporting", href: ROUTES.SEIZURE_MGMT_DETENTION_REPORTING },
-        ],
-      },
-      {
-        label: "Recovery Memo",
-        children: [
-          { label: "Create Recovery Memo", href: ROUTES.SEIZURE_MGMT_RECOVERY_MEMO },
-          { label: "Reporting", href: ROUTES.SEIZURE_MGMT_RECOVERY_REPORTING },
-        ],
-      },
-      {
-        label: "Seizure Report",
-        children: [
-          { label: "Create Seizure Report", href: ROUTES.SEIZURE_MGMT_SEIZURE_REPORT },
-        ],
-      },
-      { label: "Reports", href: ROUTES.SEIZURE_MGMT_REPORTS },
-    ],
-  },
+  //     {
+  //       label: "Warehouse",
+  //       children: [
+  //         { label: "Warehouse Setup", href: ROUTES.WAREHOUSE_SETUP },
+  //         { label: "Zone & Location", href: ROUTES.ZONE_LOCATION_MANAGEMENT },
+  //         { label: "Storage Allocation", href: ROUTES.STORAGE_ALLOCATION },
+  //         { label: "Stock Reconciliation", href: ROUTES.STOCK_RECONCILIATION },
+  //         { label: "Release Inventory", href: ROUTES.RELEASE_INVENTORY },
+  //         { label: "Camera Integration", href: ROUTES.CAMERA_INTEGRATION },
+  //       ],
+  //     },
+  //     {
+  //       label: "Inventory Management",
+  //       children: [
+  //         {
+  //           label: "Goods Receipt",
+  //           href: ROUTES.GOODS_RECEIPT,
+
+  //         },
+  //         {
+  //           label: "Stock Management",
+  //           href: ROUTES.STOCK_MANAGEMENT,
+
+  //         },
+  //         {
+  //           label: "Cycle Counting & Audit",
+  //           href: ROUTES.CYCLE_COUNTING,
+
+  //         },
+  //         {
+  //           label: "Inventory Valuation",
+  //           href: ROUTES.INVENTORY_VALUATION,
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       label: "Transfers & Handover",
+  //       children: [
+  //         { label: "Inter-Collectorate Transfer", href: ROUTES.INTER_COLLECTORATE_TRANSFER },
+  //         { label: "Internal Movement", href: ROUTES.INTERNAL_MOVEMENT },
+  //         { label: "Handover Requests", href: ROUTES.HANDOVER_REQUESTS },
+  //         { label: "Double Authentication", href: ROUTES.DOUBLE_AUTHENTICATION },
+  //         { label: "Transfer Tracking", href: ROUTES.TRANSFER_TRACKING },
+  //       ],
+  //     },
+  //     {
+  //       label: "Perishable Management",
+  //       children: [
+  //         { label: "Perishable Register", href: ROUTES.PERISHABLE_REGISTER },
+  //         { label: "Expiry Tracking", href: ROUTES.EXPIRY_TRACKING },
+  //         { label: "Priority Disposal Queue", href: ROUTES.PRIORITY_DISPOSAL_QUEUE },
+  //         { label: "Destruction Orders", href: ROUTES.DESTRUCTION_ORDERS },
+  //         { label: "Lot Creation", href: ROUTES.LOT_CREATION },
+  //         { label: "Item Valuation", href: ROUTES.ITEM_VALUATION },
+  //       ],
+  //     },
+
+
+  //     {
+  //       label: "Download Reports",
+  //       children: [
+  //         { label: "Standard Reports", href: ROUTES.STANDARD_REPORTS },
+  //         { label: "Custom Report Builder", href: ROUTES.CUSTOM_REPORT_BUILDER },
+  //         { label: "Export Center", href: ROUTES.EXPORT_CENTER },
+  //       ],
+  //     },
+  //     { label: "HS Codes file", href: ROUTES.HS_CODES_FILE },
+
+  //   ],
+  // },
+  // {
+  //   label: "Seizure Management",
+  //   overviewHref: ROUTES.SEIZURE_MANAGEMENT,
+  //   children: [
+  //     { label: "Dashboard", href: ROUTES.SEIZURE_MANAGEMENT },
+  //     {
+  //       label: "Note Sheet",
+  //       children: [
+  //         { label: "Note Sheets", href: ROUTES.SEIZURE_MGMT_NOTE_SHEET },
+  //       ],
+  //     },
+  //     {
+  //       label: "Detention",
+  //       children: [
+  //         { label: "New Detention Memo", href: ROUTES.DETENTION_MEMO },
+  //         { label: "Assessment", href: ROUTES.SEIZURE_MGMT_ASSESSMENT },
+  //         { label: "Reporting", href: ROUTES.SEIZURE_MGMT_DETENTION_REPORTING },
+  //       ],
+  //     },
+  //     {
+  //       label: "Recovery Memo",
+  //       children: [
+  //         { label: "Create Recovery Memo", href: ROUTES.SEIZURE_MGMT_RECOVERY_MEMO },
+  //         { label: "Reporting", href: ROUTES.SEIZURE_MGMT_RECOVERY_REPORTING },
+  //       ],
+  //     },
+  //     {
+  //       label: "Seizure Report",
+  //       children: [
+  //         { label: "Create Seizure Report", href: ROUTES.SEIZURE_MGMT_SEIZURE_REPORT },
+  //       ],
+  //     },
+  //     { label: "Reports", href: ROUTES.SEIZURE_MGMT_REPORTS },
+  //   ],
+  // },
   {
     label: "Human Resource",
     children: [
@@ -526,36 +527,36 @@ const ALL_NAV_ITEMS: (NavItem | NavGroup)[] = [
       { label: "Recruitment", href: ROUTES.RECRUITMENT },
     ],
   },
-  {
-    label: "Armory",
-    children: [
-      { label: "Armory Dashboard", href: ROUTES.ARMORY },
-    ],
-  },
-  {
-    label: "Litigation Management",
-    children: [
-      {
-        label: "Cases",
-        children: [
-          { label: "FIR Registration", href: ROUTES.FIR_REGISTRATION },
-          { label: "Case File Creation", href: ROUTES.CASE_FILE_CREATION },
-          { label: "Court Proceedings", href: ROUTES.COURT_PROCEEDINGS },
-          { label: "Legal Documents", href: ROUTES.LEGAL_DOCUMENTS },
-          { label: "Case Status Tracking", href: ROUTES.CASE_STATUS_TRACKING },
-        ],
-      },
-    ],
-  },
-  {
-    label: "Auction Management",
-    children: [
-      { label: "ASO Portal Sync", href: ROUTES.ASO_PORTAL_SYNC },
-      { label: "Bidding Management", href: ROUTES.BIDDING_MANAGEMENT },
-      { label: "Sale Completion", href: ROUTES.SALE_COMPLETION },
-      { label: "Revenue Reports", href: ROUTES.REVENUE_REPORTS },
-    ],
-  },
+  // {
+  //   label: "Armory",
+  //   children: [
+  //     { label: "Armory Dashboard", href: ROUTES.ARMORY },
+  //   ],
+  // },
+  // {
+  //   label: "Litigation Management",
+  //   children: [
+  //     {
+  //       label: "Cases",
+  //       children: [
+  //         { label: "FIR Registration", href: ROUTES.FIR_REGISTRATION },
+  //         { label: "Case File Creation", href: ROUTES.CASE_FILE_CREATION },
+  //         { label: "Court Proceedings", href: ROUTES.COURT_PROCEEDINGS },
+  //         { label: "Legal Documents", href: ROUTES.LEGAL_DOCUMENTS },
+  //         { label: "Case Status Tracking", href: ROUTES.CASE_STATUS_TRACKING },
+  //       ],
+  //     },
+  //   ],
+  // },
+  // {
+  //   label: "Auction Management",
+  //   children: [
+  //     { label: "ASO Portal Sync", href: ROUTES.ASO_PORTAL_SYNC },
+  //     { label: "Bidding Management", href: ROUTES.BIDDING_MANAGEMENT },
+  //     { label: "Sale Completion", href: ROUTES.SALE_COMPLETION },
+  //     { label: "Revenue Reports", href: ROUTES.REVENUE_REPORTS },
+  //   ],
+  // },
   {
     label: "AI Monitoring & Analytics",
     children: [
@@ -574,6 +575,7 @@ const ALL_NAV_ITEMS: (NavItem | NavGroup)[] = [
           { label: "Object Detection", href: ROUTES.OBJECT_DETECTION },
           { label: "Person Journey", href: ROUTES.PERSON_JOURNEY },
           { label: "ANPR Settings", href: ROUTES.ANPR_SETTINGS },
+          { label: "Vehicle Tracking", href: ROUTES.ANPR_VEHICLE_TRACKING },
           { label: "Anomaly Detection", href: ROUTES.ANOMALY_DETECTION },
         ],
       },
@@ -638,25 +640,25 @@ const ALL_NAV_ITEMS: (NavItem | NavGroup)[] = [
   },
 
  
-  {
-    label: "System Configuration",
-    children: [
-      { label: "General Settings", href: ROUTES.GENERAL_SETTINGS },
-      { label: "Roles & Permissions", href: ROUTES.USER_ROLE_MANAGEMENT },
-      { label: "Integrations", href: ROUTES.INTEGRATIONS },
-      { label: "Notifications", href: ROUTES.NOTIFICATIONS },
-      { label: "Security & Access", href: ROUTES.SECURITY_ACCESS },
-      { label: "Logs", href: ROUTES.LOGS },
-    ],
-  },
+  // {
+  //   label: "System Configuration",
+  //   children: [
+  //     { label: "General Settings", href: ROUTES.GENERAL_SETTINGS },
+  //     { label: "Roles & Permissions", href: ROUTES.USER_ROLE_MANAGEMENT },
+  //     { label: "Integrations", href: ROUTES.INTEGRATIONS },
+  //     { label: "Notifications", href: ROUTES.NOTIFICATIONS },
+  //     { label: "Security & Access", href: ROUTES.SECURITY_ACCESS },
+  //     { label: "Logs", href: ROUTES.LOGS },
+  //   ],
+  // },
 ]
 
 /** Sidebar navigation sections: each has a title and list of groups or items */
 export const NAV_SECTIONS: { title: string; items: (NavItem | NavGroup)[] }[] = [
   { title: "Main Menu", items: ALL_NAV_ITEMS.slice(0, 1) },
   { title: "Management System", items: ALL_NAV_ITEMS.slice(1, 8) },
-  { title: "Reports and Monitoring", items: ALL_NAV_ITEMS.slice(8, 9) },
-  { title: "System", items: ALL_NAV_ITEMS.slice(9, 10) },
+  // { title: "Reports and Monitoring", items: ALL_NAV_ITEMS.slice(8, 9) },
+  // { title: "System", items: ALL_NAV_ITEMS.slice(9, 10) },
 ]
 
 export type NavSection = { title: string; items: (NavItem | NavGroup)[] }

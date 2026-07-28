@@ -569,3 +569,52 @@ export async function fetchPersonIdentities(limit = 50): Promise<{
   if (!res.ok) throw new Error(`Failed to load persons (${res.status})`);
   return res.json();
 }
+
+export type PlateCapture = {
+  timestamp: string;
+  camera_key: string;
+  plate_number: string;
+  det_conf: number;
+  ocr_conf: number;
+  plate_image: string;
+  frame_image: string;
+  accepted: boolean;
+};
+
+export type PlateCaptureSummary = {
+  anpr_cameras: number;
+  reads_today: number;
+  accepted_today: number;
+  unique_plates_today: number;
+  match_rate: number;
+  total_captures: number;
+};
+
+export async function fetchPlateCaptures(opts?: {
+  page?: number;
+  page_size?: number;
+  camera_key?: string;
+  q?: string;
+  cleanup?: boolean;
+}): Promise<{
+  count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  summary: PlateCaptureSummary;
+  cleanup?: { removed_rows: number; deleted_files: number };
+  results: PlateCapture[];
+}> {
+  const params = new URLSearchParams();
+  params.set("page", String(opts?.page ?? 1));
+  params.set("page_size", String(opts?.page_size ?? 25));
+  if (opts?.camera_key) params.set("camera_key", opts.camera_key);
+  if (opts?.q) params.set("q", opts.q);
+  if (opts?.cleanup === false) params.set("cleanup", "false");
+  const res = await fetch(`${API}/cameras/plate-captures/?${params.toString()}`, {
+    headers: getAuthHeaders(),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Failed to load plate captures (${res.status})`);
+  return res.json();
+}

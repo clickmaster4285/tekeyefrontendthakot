@@ -81,7 +81,7 @@ const EXPLICIT_SUBMENU_ICONS: Record<string, SidebarIconComponent> = {
   "Cargo/Delivery Logs": ClipboardList,
   // Warehouse Management System submenus
   "Seizure & Receipt": FileText,
-  "Warehouse Management": Package,
+  // "Warehouse Management": Package,
   "Case Management": Scale,
   Cases: Scale,
   "Armory Dashboard": ShieldCheck,

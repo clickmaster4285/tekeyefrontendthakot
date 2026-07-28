@@ -175,6 +175,9 @@ export const PAGES = {
     import("@/pages/operations/PersonJourneyDetail").then((m) => ({ default: m.default }))
   ),
   AnprSettings: lazy(() => import("@/pages/cameras/AnprSettings").then((m) => ({ default: m.default }))),
+  AnprVehicleTracking: lazy(() =>
+    import("@/pages/cameras/VehicleTracking").then((m) => ({ default: m.default }))
+  ),
   AnomalyDetection: lazy(() => import("@/pages/cameras/AnomalyDetection").then((m) => ({ default: m.default }))),
   Reports: lazy(() => import("@/pages/reports/Reports").then((m) => ({ default: m.default }))),
   PredictiveInsights: lazy(() => import("@/pages/reports/PredictiveInsights").then((m) => ({ default: m.default }))),

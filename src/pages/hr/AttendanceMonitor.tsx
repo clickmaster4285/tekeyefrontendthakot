@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import { Loader2, Play, Square, ScanFace } from "lucide-react"
 import { ModulePageLayout } from "@/components/dashboard/module-page-layout"
@@ -21,6 +21,8 @@ export default function AttendanceMonitorPage() {
   const [looping, setLooping] = useState(false)
   const [snapshotUrls, setSnapshotUrls] = useState<Record<number, string>>({})
   const { videoRef, canvasRef, active, error, start, stop, captureBase64 } = useCamera()
+  const autoStartedRef = useRef(false)
+  const userStoppedRef = useRef(false)
 
   const refresh = useCallback(async () => {
     try {
@@ -32,6 +34,24 @@ export default function AttendanceMonitorPage() {
   }, [])
 
   usePolling(refresh, 2000, true)
+
+  // Auto-start all connected cameras once when CCTV data first loads
+  useEffect(() => {
+    const cameras = overview?.cameras || []
+    if (!cameras.length || autoStartedRef.current || userStoppedRef.current) return
+    const running = overview?.running_count ?? 0
+    if (running >= cameras.length) {
+      autoStartedRef.current = true
+      return
+    }
+    autoStartedRef.current = true
+    void recognitionApi
+      .cctvAction("start_all")
+      .then(() => refresh())
+      .catch(() => {
+        autoStartedRef.current = false
+      })
+  }, [overview?.cameras, overview?.running_count, refresh])
 
   useEffect(() => {
     let cancelled = false
@@ -79,6 +99,8 @@ export default function AttendanceMonitorPage() {
 
   const startAll = async () => {
     setBusy(true)
+    userStoppedRef.current = false
+    autoStartedRef.current = true
     try {
       await recognitionApi.cctvAction("start_all")
       await refresh()
@@ -92,6 +114,7 @@ export default function AttendanceMonitorPage() {
 
   const stopAll = async () => {
     setBusy(true)
+    userStoppedRef.current = true
     try {
       await recognitionApi.cctvAction("stop_all")
       await refresh()
@@ -210,7 +233,7 @@ export default function AttendanceMonitorPage() {
         </TabsContent>
 
         <TabsContent value="cctv" className="space-y-4">
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
             <Button onClick={startAll} disabled={busy}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Play className="h-4 w-4 mr-2" />}
               Start all
@@ -219,8 +242,19 @@ export default function AttendanceMonitorPage() {
               <Square className="h-4 w-4 mr-2" />
               Stop all
             </Button>
-            <Badge variant="secondary">Running: {overview?.running_count ?? 0}</Badge>
+            <Badge variant="secondary">
+              Cameras: {overview?.cameras?.length ?? 0} · Running: {overview?.running_count ?? 0}
+            </Badge>
           </div>
+
+          {(overview?.cameras || []).length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-sm text-muted-foreground">
+                No active cameras found. Add cameras in Camera Management — they will appear here and
+                start automatically for attendance.
+              </CardContent>
+            </Card>
+          ) : null}
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {(overview?.cameras || []).map((cam) => (
@@ -228,8 +262,12 @@ export default function AttendanceMonitorPage() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">{cam.name}</CardTitle>
                   <CardDescription>
-                    {cam.location || cam.purpose || "Camera"} ·{" "}
-                    {cam.runtime?.running ? (cam.runtime.connected ? "Connected" : "Starting…") : "Stopped"}
+                    {cam.location || cam.purpose_label || cam.purpose || "Camera"} ·{" "}
+                    {cam.runtime?.running
+                      ? cam.runtime.connected
+                        ? "Connected"
+                        : "Starting…"
+                      : "Stopped"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
