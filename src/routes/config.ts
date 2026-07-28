@@ -679,12 +679,12 @@ const VEHICLE_MANAGEMENT_NAV: NavGroup = {
   ],
 }
 
-const INCIDENT_MANAGEMENT_NAV: NavGroup = {
+const INCIDENT_MANAGEMENT_NAV: NavGroup = {         
   label: "Incident Management",
   children: [
     { label: "AI Incident Management", href: ROUTES.AI_INCIDENT_MANAGEMENT },
     { label: "Incident Creation", href: ROUTES.INCIDENT_CREATION },
-  ],
+  ], 
 }
 
 const VISITOR_OVERVIEW_NAV: NavItem = {
