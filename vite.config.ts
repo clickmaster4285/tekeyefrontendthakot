@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from "vite"
 import react from "@vitejs/plugin-react"
+import basicSsl from "@vitejs/plugin-basic-ssl"
 import { VitePWA } from "vite-plugin-pwa"
 import * as path from "path"
 import * as fs from "fs"
@@ -25,84 +26,98 @@ function ensureDistIconPlugin() {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, projectRoot, "")
   const apiBase = env.VITE_API_BASE_URL?.trim()
-  const devProxyTarget = apiBase ? undefined : "http://127.0.0.1:8000"
+  // Same-origin /api + /media via proxy avoids mixed-content blocks when the app is served over HTTPS.
+  const proxyTarget = apiBase || "http://127.0.0.1:8000"
+  const useDevProxy =
+    !apiBase ||
+    apiBase.startsWith("http://127.0.0.1") ||
+    apiBase.startsWith("http://localhost")
 
   return {
-  root: projectRoot,
-  publicDir: path.join(projectRoot, "public"),
-  plugins: [
-    ensureDistIconPlugin(),
-    react(),
-    VitePWA({
-      registerType: "autoUpdate",
-      includeAssets: [
-        "pakistan-customs-logo.png",
-        "icon.svg",
-        "models/blazeface/model.json",
-        "models/blazeface/group1-shard1of1.bin",
-      ],
-      manifest: {
-        name: "Pakistan Customs — Secure Access Portal",
-        short_name: "Customs Portal",
-        description:
-          "Pakistan Customs integrated management system — VMS, WMS, AI Analytics, and more.",
-        theme_color: "#2563eb",
-        background_color: "#fafafa",
-        display: "standalone",
-        orientation: "any",
-        scope: "/",
-        start_url: "/",
-        lang: "en",
-        dir: "ltr",
-        icons: [
-          {
-            src: "pakistan-customs-logo.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any",
-          },
-          {
-            src: "pakistan-customs-logo.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "any",
-          },
+    root: projectRoot,
+    publicDir: path.join(projectRoot, "public"),
+    plugins: [
+      ensureDistIconPlugin(),
+      basicSsl({
+        name: "tekeye-dev",
+        domains: ["localhost", "127.0.0.1"],
+      }),
+      react(),
+      VitePWA({
+        registerType: "autoUpdate",
+        includeAssets: [
+          "pakistan-customs-logo.png",
+          "icon.svg",
+          "models/blazeface/model.json",
+          "models/blazeface/group1-shard1of1.bin",
         ],
-      },
-      workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,jpg,jpeg,bin,json}"],
-        navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/api/, /^\/_/],
-        cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true,
-      },
-    }),
-  ],
-  optimizeDeps: {
-    include: ["qrcode"],
-  },
-  build: {
-    commonjsOptions: {
-      include: [/qrcode/, /node_modules/],
-      transformMixedEsModules: true,
+        manifest: {
+          name: "Pakistan Customs — Secure Access Portal",
+          short_name: "Customs Portal",
+          description:
+            "Pakistan Customs integrated management system — VMS, WMS, AI Analytics, and more.",
+          theme_color: "#2563eb",
+          background_color: "#fafafa",
+          display: "standalone",
+          orientation: "any",
+          scope: "/",
+          start_url: "/",
+          lang: "en",
+          dir: "ltr",
+          icons: [
+            {
+              src: "pakistan-customs-logo.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "any",
+            },
+            {
+              src: "pakistan-customs-logo.png",
+              sizes: "192x192",
+              type: "image/png",
+              purpose: "any",
+            },
+          ],
+        },
+        workbox: {
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,jpg,jpeg,bin,json}"],
+          navigateFallback: "/index.html",
+          navigateFallbackDenylist: [/^\/api/, /^\/_/],
+          cleanupOutdatedCaches: true,
+          skipWaiting: true,
+          clientsClaim: true,
+        },
+      }),
+    ],
+    optimizeDeps: {
+      include: ["qrcode"],
     },
-  },
-  resolve: {
-    alias: {
-      "@": path.join(projectRoot, "src"),
+    build: {
+      commonjsOptions: {
+        include: [/qrcode/, /node_modules/],
+        transformMixedEsModules: true,
+      },
     },
-  },
-  server: {
-    port: 3000,
-    ...(devProxyTarget
-      ? {
-          proxy: {
-            "/api": { target: devProxyTarget, changeOrigin: true },
-            "/media": { target: devProxyTarget, changeOrigin: true },
-          },
-        }
-      : {}),
-  },
+    resolve: {
+      alias: {
+        "@": path.join(projectRoot, "src"),
+      },
+    },
+    server: {
+      port: 3000,
+      https: true,
+      ...(useDevProxy
+        ? {
+            proxy: {
+              "/api": { target: proxyTarget, changeOrigin: true, secure: false },
+              "/media": { target: proxyTarget, changeOrigin: true, secure: false },
+            },
+          }
+        : {}),
+    },
+    preview: {
+      port: 3000,
+      https: true,
+    },
   }
 })
