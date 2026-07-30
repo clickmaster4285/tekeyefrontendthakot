@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Camera, Car, MapPin, Video, VideoOff, AlertCircle } from "lucide-react"
+import { getCameraErrorMessage, requestUserMedia } from "@/lib/utils"
 
 interface WalkInStep1Props {
   formData: {
@@ -73,7 +74,7 @@ export function WalkInStep1BasicInfo({
     setError(null)
     setIsLoading(true)
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
+      const mediaStream = await requestUserMedia({
         video: {
           facingMode: "user",
           width: { ideal: 640 },

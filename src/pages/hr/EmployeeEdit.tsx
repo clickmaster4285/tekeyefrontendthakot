@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   fetchStaffById,
-  isDispositionStaffId,
   resolveStaffMediaUrl,
   resolveStaffPhotoGallery,
   updateStaff,
@@ -251,19 +250,6 @@ export default function EmployeeEditPage() {
     } finally {
       setSubmitting(false)
     }
-  }
-
-  if (Number.isInteger(staffId) && isDispositionStaffId(staffId)) {
-    return (
-      <div className="w-full px-4 sm:px-6 py-8">
-        <p className="text-muted-foreground mb-4">
-          Disposition list records are read-only and cannot be edited here.
-        </p>
-        <Button variant="outline" asChild>
-          <Link to={ROUTES.EMPLOYEES}>Back to Employees</Link>
-        </Button>
-      </div>
-    )
   }
 
   if (isLoading || !id) {

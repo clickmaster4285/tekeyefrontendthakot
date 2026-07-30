@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { Label } from "@/components/ui/label"
 import { Camera, FileText, X, Upload, Video, VideoOff, AlertCircle } from "lucide-react"
+import { getCameraErrorMessage, requestUserMedia } from "@/lib/utils"
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -16,17 +17,6 @@ function readFileAsDataUrl(file: File): Promise<string> {
 
 function isImageDataUrl(s: string): boolean {
   return typeof s === "string" && s.startsWith("data:image/")
-}
-
-function getCameraErrorMessage(err: unknown): string {
-  if (err instanceof Error) {
-    const n = err.name
-    if (n === "NotAllowedError") return "Camera permission denied. Please allow camera access."
-    if (n === "NotFoundError") return "No camera found."
-    if (n === "NotReadableError") return "Camera is in use by another app."
-    return err.message || "Could not access camera."
-  }
-  return "Could not access camera."
 }
 
 type DocumentField = keyof WalkInStep2DocumentsFormData
@@ -191,7 +181,7 @@ export function WalkInStep2DocumentsUpload({
     setCameraError(null)
     setCameraLoading(true)
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
+      const mediaStream = await requestUserMedia({
         video: {
           facingMode: "user",
           width: { ideal: 1280 },

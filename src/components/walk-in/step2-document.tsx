@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Camera, Upload, Video, VideoOff, FileImage, X } from "lucide-react"
+import { getCameraErrorMessage, requestUserMedia } from "@/lib/utils"
 
 interface WalkInStep2DocumentProps {
   formData: { documentImages: string[] }
@@ -55,7 +56,7 @@ export function WalkInStep2Document({
     setError(null)
     setIsLoading(true)
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
+      const mediaStream = await requestUserMedia({
         video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       })

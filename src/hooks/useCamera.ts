@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
+import { getCameraErrorMessage, requestUserMedia } from "@/lib/utils"
 
 export function useCamera() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -10,7 +11,7 @@ export function useCamera() {
   const start = useCallback(async () => {
     try {
       setError(null)
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const stream = await requestUserMedia({
         video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
         audio: false,
       })
@@ -19,8 +20,8 @@ export function useCamera() {
         videoRef.current.srcObject = stream
       }
       setActive(true)
-    } catch {
-      setError("Camera access denied or unavailable")
+    } catch (err) {
+      setError(getCameraErrorMessage(err))
       setActive(false)
     }
   }, [])

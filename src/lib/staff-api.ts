@@ -1,9 +1,4 @@
 import { API_BASE_URL, getAuthHeaders, getAuthHeadersFormData, getStoredToken } from "@/lib/api";
-import {
-  getDispositionStaff,
-  getDispositionStaffById,
-  isDispositionStaffId,
-} from "@/lib/disposition-staff";
 
 /** Staff record as returned by the backend (list/detail). */
 export type StaffRecord = {
@@ -80,8 +75,8 @@ export type StaffRecord = {
   transferred_from?: string | null;
   transferred_to?: string | null;
   role?: string | null;
-  /** `database` = API/local store; `disposition` = Peshawar enforcement disposition JSON */
-  record_source?: "database" | "disposition";
+  /** Source of the staff row (`database` = API / local store). */
+  record_source?: "database";
   user_details?: {
     id: number;
     username: string;
@@ -513,25 +508,16 @@ export async function fetchStaff(): Promise<StaffRecord[]> {
   return storedItems.map(localToStaffRecord);
 }
 
-/** Database/local staff plus Peshawar disposition list (677 records). `fetchStaff` is unchanged. */
+/** Employee directory — database / local staff only. */
 export async function fetchEmployeesDirectory(): Promise<StaffRecord[]> {
   const apiStaff = await fetchStaff();
-  const marked = apiStaff.map((s) => ({
+  return apiStaff.map((s) => ({
     ...s,
     record_source: s.record_source ?? ("database" as const),
   }));
-  return [...marked, ...getDispositionStaff()];
 }
 
-export { isDispositionStaffId } from "@/lib/disposition-staff";
-
 export async function fetchStaffById(id: number): Promise<StaffRecord> {
-  if (isDispositionStaffId(id)) {
-    const record = getDispositionStaffById(id);
-    if (!record) throw new Error("Staff not found");
-    return record;
-  }
-
   if (useStaffRestApi()) {
     const res = await fetch(`${STAFF_ENDPOINT}${id}/`, { headers: getAuthHeaders() });
     if (res.status === 404) throw new Error("Staff not found");
