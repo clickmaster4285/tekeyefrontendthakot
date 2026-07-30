@@ -17,11 +17,9 @@ import {
 import {
   fetchEmployeesDirectory,
   deleteStaff,
-  isDispositionStaffId,
   type StaffRecord,
 } from "@/lib/staff-api"
 import { StaffAvatar } from "@/components/hr/staff-avatar"
-import { Badge } from "@/components/ui/badge"
 import {
   Select,
   SelectContent,
@@ -70,14 +68,6 @@ export default function EmployeesPage() {
   }
 
   const handleDeleteEmployee = async (id: number) => {
-    if (isDispositionStaffId(id)) {
-      toast({
-        title: "Cannot delete",
-        description: "Disposition list records are read-only. Remove staff from the database section only.",
-        variant: "destructive",
-      })
-      return
-    }
     if (!confirm("Are you sure you want to delete this employee?")) return
     try {
       await deleteStaff(id)
@@ -92,9 +82,6 @@ export default function EmployeesPage() {
       })
     }
   }
-
-  const dbCount = staff.filter((s) => s.record_source !== "disposition").length
-  const dispositionCount = staff.filter((s) => s.record_source === "disposition").length
 
   const filtered = useMemo(
     () =>
@@ -139,11 +126,11 @@ export default function EmployeesPage() {
   return (
     <ModulePageLayout
       title="Employees"
-      description="Disposition list of Assistant/Deputy Collectors of respect of Collectorate of Customs (Enforcement), Peshawar."
+      description="Staff directory for Collectorate of Customs (Enforcement), Peshawar."
       breadcrumbs={[{ label: "HR" }, { label: "Employees" }]}
     >
       <div className="grid gap-6">
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -153,9 +140,7 @@ export default function EmployeesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{staff.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {dbCount} database · {dispositionCount} disposition
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">From API / saved staff</p>
             </CardContent>
           </Card>
           <Card>
@@ -166,20 +151,8 @@ export default function EmployeesPage() {
               <Building2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dbCount}</div>
-              <p className="text-xs text-muted-foreground mt-1">From API / saved staff</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Disposition list
-              </CardTitle>
-              <UserPlus className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{dispositionCount}</div>
-              <p className="text-xs text-muted-foreground mt-1">Peshawar enforcement</p>
+              <div className="text-2xl font-bold">{staff.length}</div>
+              <p className="text-xs text-muted-foreground mt-1">Active staff records</p>
             </CardContent>
           </Card>
           <Card>
@@ -201,7 +174,7 @@ export default function EmployeesPage() {
             <div className="min-w-0">
               <CardTitle className="text-xl font-semibold">Employee Directory</CardTitle>
               <CardDescription>
-                Database staff and Peshawar disposition list ({dbCount} + {dispositionCount} records)
+                Database staff ({staff.length} records)
               </CardDescription>
             </div>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
@@ -239,7 +212,6 @@ export default function EmployeesPage() {
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead className="w-12 text-center">S.No.</TableHead>
-                    <TableHead>Source</TableHead>
                     <TableHead>Personal No.</TableHead>
                     <TableHead>Employee Name</TableHead>
                     <TableHead>Father&apos;s Name</TableHead>
@@ -256,13 +228,12 @@ export default function EmployeesPage() {
                 <TableBody>
                   {filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={13} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={12} className="text-center text-muted-foreground py-8">
                         No staff found. Click "Add Staff" to create a new record.
                       </TableCell>
                     </TableRow>
                   ) : (
                     pagedStaff.map((row, index) => {
-                      const isDisposition = row.record_source === "disposition"
                       const rowNumber = (page - 1) * pageSize + index + 1
                       return (
                       <TableRow 
@@ -271,12 +242,7 @@ export default function EmployeesPage() {
                         onClick={() => handleViewEmployee(row)}
                       >
                         <TableCell className="text-center font-medium">
-                          {isDisposition ? row.personal_number : rowNumber}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={isDisposition ? "secondary" : "default"} className="text-[10px] whitespace-nowrap">
-                            {isDisposition ? "Disposition" : "Database"}
-                          </Badge>
+                          {rowNumber}
                         </TableCell>
                         <TableCell>{row.personal_number || row.user || row.employee_id || "—"}</TableCell>
                         <TableCell className="font-medium">
@@ -311,32 +277,28 @@ export default function EmployeesPage() {
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            {!isDisposition && (
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 text-green-600"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  navigate(`/employees/${row.id}/edit`)
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {!isDisposition && (
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 text-red-600"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleDeleteEmployee(row.id)
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-green-600"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                navigate(`/employees/${row.id}/edit`)
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-red-600"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteEmployee(row.id)
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>

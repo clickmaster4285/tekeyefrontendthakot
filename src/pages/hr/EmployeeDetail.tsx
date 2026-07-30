@@ -5,7 +5,6 @@ import {
   fetchStaffById,
   downloadStaffDocument,
   deleteStaff,
-  isDispositionStaffId,
   resolveStaffPhotoGallery,
   type StaffRecord,
 } from "@/lib/staff-api"
@@ -249,7 +248,6 @@ export default function EmployeeDetailPage() {
   }
 
   const s = staff as StaffRecord
-  const isDisposition = s.record_source === "disposition" || isDispositionStaffId(s.id)
   const created = s.created_at ? new Date(s.created_at).toLocaleString() : "—"
 
   return (
@@ -302,35 +300,28 @@ export default function EmployeeDetailPage() {
                 {s.employee_id ? ` · ID ${s.employee_id}` : ""}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                {isDisposition
-                  ? `Disposition list · S.No. ${s.personal_number ?? ""}`
-                  : `Added ${created}`}
+                Added {created}
               </p>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {isDisposition && <Badge variant="secondary">Disposition list</Badge>}
-          {!isDisposition && s.user != null && <Badge variant="default">Linked account</Badge>}
-          {!isDisposition && (
-            <Button variant="outline" size="sm" asChild>
-              <Link to={`/employees/${s.id}/edit`}>
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit
-              </Link>
-            </Button>
-          )}
-          {!isDisposition && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={() => setDeleteOpen(true)}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
-          )}
+          {s.user != null && <Badge variant="default">Linked account</Badge>}
+          <Button variant="outline" size="sm" asChild>
+            <Link to={`/employees/${s.id}/edit`}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </Link>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => setDeleteOpen(true)}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
         </div>
       </div>
 
@@ -482,7 +473,6 @@ export default function EmployeeDetailPage() {
           />
         </DetailSection>
 
-        {!isDisposition && (
         <DetailSection title="Documents / compliance" icon={FileText}>
           <div className="space-y-6">
             <DocumentPreviewItem staffId={s.id} field="resume_file" label="Resume / CV" filePath={s.resume_file} />
@@ -500,7 +490,6 @@ export default function EmployeeDetailPage() {
             </dl>
           </div>
         </DetailSection>
-        )}
 
         <DetailSection title="Optional / HR analytics" icon={BarChart3}>
           <DetailGrid
