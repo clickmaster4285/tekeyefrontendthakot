@@ -22,6 +22,7 @@ import {
   type GroupVisitMember,
 } from "@/components/walk-in/group-member"
 import { useToast } from "@/hooks/use-toast"
+import { getCameraErrorMessage, requestUserMedia } from "@/lib/utils"
 
 const MAX_PHOTO_SIZE_BYTES = 2 * 1024 * 1024
 const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/jpg", "image/png"]
@@ -86,14 +87,13 @@ export function GroupMembersSection({
     }
     setCameraError(null)
     setCameraLoading(true)
-    navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: "user" } })
+    requestUserMedia({ video: { facingMode: "user" } })
       .then((stream) => {
         streamRef.current = stream
         if (videoRef.current) videoRef.current.srcObject = stream
       })
       .catch((err) => {
-        setCameraError(err instanceof Error ? err.message : "Could not access camera.")
+        setCameraError(getCameraErrorMessage(err))
       })
       .finally(() => setCameraLoading(false))
     return () => stopCamera()

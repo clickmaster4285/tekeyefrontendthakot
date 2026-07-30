@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Camera, Video, VideoOff, AlertCircle } from "lucide-react"
+import { getCameraErrorMessage, requestUserMedia } from "@/lib/utils"
 
 interface CameraCaptureProps {
   onCapture: (file: File) => void
@@ -41,7 +42,7 @@ export function CameraCapture({ onCapture, onCancel, title = "Capture from camer
     setError(null)
     setIsLoading(true)
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
+      const mediaStream = await requestUserMedia({
         video: {
           facingMode: "user",
           width: { ideal: 1920 },
@@ -51,7 +52,7 @@ export function CameraCapture({ onCapture, onCancel, title = "Capture from camer
       })
       setStream(mediaStream)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not access camera. Please allow camera permission.")
+      setError(getCameraErrorMessage(err))
     } finally {
       setIsLoading(false)
     }

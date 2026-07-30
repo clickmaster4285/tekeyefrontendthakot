@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from "react"
 import { Video, Camera } from "lucide-react"
 import { ModulePageLayout } from "@/components/dashboard/module-page-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { getCameraErrorMessage, requestUserMedia } from "@/lib/utils"
 
 const YOLO_VIDEO_SRC = "/After YOLO object detection (Output Video).mp4"
 
@@ -31,7 +32,7 @@ export default function VehicleDetectionPage() {
       return
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const stream = await requestUserMedia({
         video: { facingMode: "environment", width: { ideal: 640 }, height: { ideal: 480 } },
         audio: false,
       })
@@ -42,11 +43,7 @@ export default function VehicleDetectionPage() {
       }
       setCameraActive(true)
     } catch (err) {
-      setCameraError(
-        err instanceof Error && err.name === "NotAllowedError"
-          ? "Camera permission denied."
-          : "Could not access camera."
-      )
+      setCameraError(getCameraErrorMessage(err))
     }
   }
 

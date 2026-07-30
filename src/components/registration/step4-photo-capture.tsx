@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Camera, Video, VideoOff, AlertCircle } from "lucide-react"
+import { getCameraErrorMessage, requestUserMedia } from "@/lib/utils"
 
 export interface PhotoCaptureFormData {
   captureDate: string
@@ -74,17 +75,13 @@ export function Step4PhotoCapture({ formData, updateFormData }: Step4PhotoCaptur
     setIsLoading(true)
     setIsVideoReady(false)
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
+      const mediaStream = await requestUserMedia({
         video: { facingMode: "user" },
         audio: false,
       })
       setStream(mediaStream)
     } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Could not access camera. Please allow camera permission and try again."
-      setError(message)
+      setError(getCameraErrorMessage(err))
     } finally {
       setIsLoading(false)
     }

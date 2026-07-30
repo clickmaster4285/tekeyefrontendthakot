@@ -22,7 +22,7 @@ import {
 } from "@/components/walk-in/group-member"
 import { Button } from "@/components/ui/button"
 import CongratulationsModal from "@/components/visitor/CongratulationsModal"
-import { cn } from "@/lib/utils"
+import { cn, getCameraErrorMessage, requestUserMedia } from "@/lib/utils"
 import { useFormik } from "formik"
 import * as Yup from "yup"
 import { isCnicExists } from "@/lib/visitor-api"
@@ -230,15 +230,14 @@ export function WalkInStep1VisitorDetails({
     preloadHumanFaceModel()
     setCameraError(null)
     setCameraLoading(true)
-    navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: "user" } })
+    requestUserMedia({ video: { facingMode: "user" } })
       .then((stream) => {
         streamRef.current = stream
         if (videoRef.current) videoRef.current.srcObject = stream
         setCameraError(null)
       })
       .catch((err) => {
-        setCameraError(err instanceof Error ? err.message : "Could not access camera.")
+        setCameraError(getCameraErrorMessage(err))
       })
       .finally(() => setCameraLoading(false))
     return () => {
@@ -258,15 +257,14 @@ export function WalkInStep1VisitorDetails({
     }
     setVehicleCameraError(null)
     setVehicleCameraLoading(true)
-    navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: "environment" } })
+    requestUserMedia({ video: { facingMode: "environment" } })
       .then((stream) => {
         vehicleStreamRef.current = stream
         if (vehicleVideoRef.current) vehicleVideoRef.current.srcObject = stream
         setVehicleCameraError(null)
       })
       .catch((err) => {
-        setVehicleCameraError(err instanceof Error ? err.message : "Could not access camera.")
+        setVehicleCameraError(getCameraErrorMessage(err))
       })
       .finally(() => setVehicleCameraLoading(false))
     return () => {
@@ -286,15 +284,14 @@ export function WalkInStep1VisitorDetails({
     }
     setMinorCameraError(null)
     setMinorCameraLoading(true)
-    navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: "user" } })
+    requestUserMedia({ video: { facingMode: "user" } })
       .then((stream) => {
         minorStreamRef.current = stream
         if (minorVideoRef.current) minorVideoRef.current.srcObject = stream
         setMinorCameraError(null)
       })
       .catch((err) => {
-        setMinorCameraError(err instanceof Error ? err.message : "Could not access camera.")
+        setMinorCameraError(getCameraErrorMessage(err))
       })
       .finally(() => setMinorCameraLoading(false))
     return () => {
