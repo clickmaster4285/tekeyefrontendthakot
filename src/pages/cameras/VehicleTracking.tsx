@@ -76,17 +76,38 @@ function PlateThumb({
 }
 
 export default function VehicleTrackingPage() {
-  const [draft, setDraft] = useState<AppliedFilters>(emptyFilters)
-  const [applied, setApplied] = useState<AppliedFilters>(emptyFilters)
+  const [filters, setFilters] = useState<AppliedFilters>(emptyFilters)
+  const [debouncedPlate, setDebouncedPlate] = useState("")
   const [page, setPage] = useState(1)
   const [preview, setPreview] = useState<PlateCapture | null>(null)
 
+  // Debounce plate text; date controls apply immediately.
+  useEffect(() => {
+    const next = filters.plate_number.trim()
+    const timer = window.setTimeout(() => {
+      setDebouncedPlate((prev) => {
+        if (prev !== next) setPage(1)
+        return next
+      })
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [filters.plate_number])
+
+  const applied = useMemo(
+    () => ({
+      plate_number: debouncedPlate,
+      date_from: filters.date_from,
+      date_to: filters.date_to,
+    }),
+    [debouncedPlate, filters.date_from, filters.date_to]
+  )
+
   const hasActiveFilters = useMemo(
     () =>
-      applied.plate_number.trim() !== "" ||
-      applied.date_from !== "" ||
-      applied.date_to !== "",
-    [applied]
+      filters.plate_number.trim() !== "" ||
+      filters.date_from !== "" ||
+      filters.date_to !== "",
+    [filters]
   )
 
   const { data, isLoading, isFetching, refetch, error } = useQuery({
@@ -95,7 +116,7 @@ export default function VehicleTrackingPage() {
       fetchPlateCaptures({
         page,
         page_size: PAGE_SIZE,
-        plate_number: applied.plate_number.trim() || undefined,
+        plate_number: applied.plate_number || undefined,
         date_from: applied.date_from || undefined,
         date_to: applied.date_to || undefined,
         cleanup: true,
@@ -110,14 +131,14 @@ export default function VehicleTrackingPage() {
   const totalPages = data?.total_pages ?? 1
   const cleanup = data?.cleanup
 
-  const applyFilters = () => {
-    setApplied(draft)
-    setPage(1)
+  const updateFilters = (patch: Partial<AppliedFilters>) => {
+    setFilters((f) => ({ ...f, ...patch }))
+    if (!("plate_number" in patch)) setPage(1)
   }
 
   const clearFilters = () => {
-    setDraft(emptyFilters)
-    setApplied(emptyFilters)
+    setFilters(emptyFilters)
+    setDebouncedPlate("")
     setPage(1)
   }
 
@@ -178,7 +199,7 @@ export default function VehicleTrackingPage() {
                 <Filter className="h-4 w-4" />
                 Filters
               </CardTitle>
-              <CardDescription>Filter by plate number and date/time range</CardDescription>
+              <CardDescription>Filters apply as you change them</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               {hasActiveFilters ? (
@@ -187,9 +208,6 @@ export default function VehicleTrackingPage() {
                   Clear
                 </Button>
               ) : null}
-              <Button size="sm" onClick={applyFilters}>
-                Apply filters
-              </Button>
             </div>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -201,9 +219,8 @@ export default function VehicleTrackingPage() {
                   id="plate-number"
                   className="pl-8"
                   placeholder="e.g. BSD987"
-                  value={draft.plate_number}
-                  onChange={(e) => setDraft((f) => ({ ...f, plate_number: e.target.value }))}
-                  onKeyDown={(e) => e.key === "Enter" && applyFilters()}
+                  value={filters.plate_number}
+                  onChange={(e) => updateFilters({ plate_number: e.target.value })}
                 />
               </div>
             </div>
@@ -212,8 +229,8 @@ export default function VehicleTrackingPage() {
               <Input
                 id="plate-from"
                 type="datetime-local"
-                value={draft.date_from}
-                onChange={(e) => setDraft((f) => ({ ...f, date_from: e.target.value }))}
+                value={filters.date_from}
+                onChange={(e) => updateFilters({ date_from: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -221,8 +238,8 @@ export default function VehicleTrackingPage() {
               <Input
                 id="plate-to"
                 type="datetime-local"
-                value={draft.date_to}
-                onChange={(e) => setDraft((f) => ({ ...f, date_to: e.target.value }))}
+                value={filters.date_to}
+                onChange={(e) => updateFilters({ date_to: e.target.value })}
               />
             </div>
           </CardContent>

@@ -30,6 +30,8 @@ import {
   fetchDetectionEventsPage,
   fetchCameras,
   fetchSites,
+  type CameraRecord,
+  type DetectionEvent,
   type DetectionEventsQuery,
   type SiteRecord,
 } from "@/lib/cameras-api"
@@ -50,6 +52,37 @@ const VEHICLE_CLASSES = new Set([
   "vehicle",
   "van",
 ])
+
+/** Map free-text search aliases → exact class_name (frontend-only; avoids backend synonym bleed). */
+const CLASS_ALIASES: Record<string, string> = {
+  car: "car",
+  cars: "car",
+  sedan: "car",
+  auto: "car",
+  automobile: "car",
+  truck: "truck",
+  trucks: "truck",
+  lorry: "truck",
+  lorries: "truck",
+  bus: "bus",
+  buses: "bus",
+  coach: "bus",
+  motorcycle: "motorcycle",
+  motorcycles: "motorcycle",
+  motorbike: "motorcycle",
+  motorbikes: "motorcycle",
+  bicycle: "bicycle",
+  bicycles: "bicycle",
+  bike: "bicycle",
+  bikes: "bicycle",
+  cycle: "bicycle",
+  cycles: "bicycle",
+  van: "van",
+  vans: "van",
+  minivan: "van",
+  vehicle: "vehicle",
+  vehicles: "vehicle",
+}
 
 type AppliedFilters = {
   q: string
@@ -74,7 +107,7 @@ function resolveThakotSiteCode(sites: SiteRecord[]): string {
       s.name?.toLowerCase().includes("thakot") ||
       s.code?.toLowerCase().includes("thakot")
   )
-  return match?.code || SITE_CODE
+  return match?.code || sites[0]?.code || SITE_CODE
 }
 
 function formatDateTime(iso: string): string {
@@ -98,11 +131,57 @@ function confidenceTone(confidence: number): string {
   return "bg-orange-500"
 }
 
+function resolveClassFromSearch(term: string): string | undefined {
+  const raw = term.trim().toLowerCase()
+  if (!raw) return undefined
+  if (CLASS_ALIASES[raw]) return CLASS_ALIASES[raw]
+  if (VEHICLE_CLASSES.has(raw)) return raw
+  return undefined
+}
+
+function resolveCameraFromSearch(term: string, cameras: CameraRecord[]): number | undefined {
+  const raw = term.trim().toLowerCase()
+  if (!raw) return undefined
+  const matches = cameras.filter((c) => {
+    const code = (c.code || "").toLowerCase()
+    const name = (c.name || "").toLowerCase()
+    const zone = (c.zone || "").toLowerCase()
+    return code.includes(raw) || name.includes(raw) || zone.includes(raw) || String(c.id) === raw
+  })
+  return matches.length === 1 ? matches[0].id : undefined
+}
+
+function rowMatchesSearch(row: DetectionEvent, term: string): boolean {
+  const raw = term.trim().toLowerCase()
+  if (!raw) return true
+  const classAlias = resolveClassFromSearch(raw)
+  if (classAlias && row.class_name?.toLowerCase() === classAlias) return true
+  const haystack = [
+    row.class_name,
+    row.label,
+    row.camera_code,
+    row.name,
+    row.camera_name,
+    row.zone,
+    row.site_code,
+    row.nvr_name,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+  return haystack.includes(raw)
+}
+
+/**
+ * Build API query using only stable backend params (class/camera/dates).
+ * Free-text `q` is intentionally NOT sent — backend synonym search mixes vehicle classes.
+ */
 function buildQuery(
   page: number,
   pageSize: number,
   filters: AppliedFilters,
-  siteCode: string
+  siteCode: string,
+  cameras: CameraRecord[]
 ): DetectionEventsQuery {
   const query: DetectionEventsQuery = {
     page,
@@ -110,11 +189,25 @@ function buildQuery(
     vehicle_only: true,
     site: siteCode,
   }
-  if (filters.q.trim()) query.q = filters.q.trim()
-  if (filters.camera !== "all") query.camera = Number(filters.camera)
+
+  let className = filters.class_name !== "all" ? filters.class_name : ""
+  let cameraId = filters.camera !== "all" ? Number(filters.camera) : undefined
+
+  const term = filters.q.trim()
+  if (term) {
+    if (!className) {
+      const fromSearch = resolveClassFromSearch(term)
+      if (fromSearch) className = fromSearch
+    }
+    if (cameraId == null || Number.isNaN(cameraId)) {
+      cameraId = resolveCameraFromSearch(term, cameras)
+    }
+  }
+
+  if (cameraId != null && !Number.isNaN(cameraId)) query.camera = cameraId
   if (filters.date_from) query.date_from = filters.date_from
   if (filters.date_to) query.date_to = filters.date_to
-  if (filters.class_name !== "all") query.class_name = filters.class_name
+  if (className) query.class_name = className
   return query
 }
 
@@ -122,8 +215,25 @@ export default function NumberPlateDetectionPage() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
   const [pageInput, setPageInput] = useState("1")
-  const [draft, setDraft] = useState<AppliedFilters>(emptyFilters)
-  const [applied, setApplied] = useState<AppliedFilters>(emptyFilters)
+  const [filters, setFilters] = useState<AppliedFilters>(emptyFilters)
+  const [debouncedQ, setDebouncedQ] = useState("")
+
+  // Debounce free-text search; selects/dates apply immediately.
+  useEffect(() => {
+    const next = filters.q.trim()
+    const timer = window.setTimeout(() => {
+      setDebouncedQ((prev) => {
+        if (prev !== next) setPage(1)
+        return next
+      })
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [filters.q])
+
+  const applied = useMemo(
+    () => ({ ...filters, q: debouncedQ }),
+    [filters, debouncedQ]
+  )
 
   const { data: sites = [] } = useQuery({
     queryKey: ["sites"],
@@ -137,9 +247,21 @@ export default function NumberPlateDetectionPage() {
     queryFn: () => fetchCameras(),
   })
 
+  const siteCameras = useMemo(() => {
+    const code = thakotSiteCode.toLowerCase()
+    const filtered = cameras.filter(
+      (c) =>
+        c.site_code?.toLowerCase() === code ||
+        c.location?.toLowerCase() === code ||
+        c.site_code?.toLowerCase().includes("thakot") ||
+        c.location?.toLowerCase().includes("thakot")
+    )
+    return filtered.length > 0 ? filtered : cameras
+  }, [cameras, thakotSiteCode])
+
   const queryParams = useMemo(
-    () => buildQuery(page, pageSize, applied, thakotSiteCode),
-    [page, pageSize, applied, thakotSiteCode]
+    () => buildQuery(page, pageSize, applied, thakotSiteCode, siteCameras),
+    [page, pageSize, applied, thakotSiteCode, siteCameras]
   )
 
   const {
@@ -151,50 +273,46 @@ export default function NumberPlateDetectionPage() {
   } = useQuery({
     queryKey: ["vehicle-detection-events", queryParams],
     queryFn: () => fetchDetectionEventsPage(queryParams),
-    placeholderData: (prev) => prev,
     refetchInterval: 12_000,
     refetchOnWindowFocus: false,
   })
 
-  const events = useMemo(
-    () =>
-      (eventsPage?.results ?? []).filter((row) =>
-        VEHICLE_CLASSES.has(String(row.class_name || "").trim().toLowerCase())
-      ),
-    [eventsPage?.results]
-  )
-  const totalCount = eventsPage?.count ?? 0
-  const totalPages = eventsPage?.total_pages ?? 0
+  const events = useMemo(() => {
+    const term = applied.q.trim()
+    return (eventsPage?.results ?? []).filter((row) => {
+      if (!VEHICLE_CLASSES.has(String(row.class_name || "").trim().toLowerCase())) return false
+      return rowMatchesSearch(row, term)
+    })
+  }, [eventsPage?.results, applied.q])
 
-  const siteCameras = useMemo(() => {
-    const code = thakotSiteCode.toLowerCase()
-    return cameras.filter(
-      (c) =>
-        c.site_code?.toLowerCase() === code ||
-        c.location?.toLowerCase() === code ||
-        c.site_code?.toLowerCase().includes("thakot") ||
-        c.location?.toLowerCase().includes("thakot")
-    )
-  }, [cameras, thakotSiteCode])
+  // When search is refined client-side, prefer visible row count for the page stats.
+  const serverCount = eventsPage?.count ?? 0
+  const clientFiltered =
+    Boolean(applied.q.trim()) &&
+    !resolveClassFromSearch(applied.q) &&
+    resolveCameraFromSearch(applied.q, siteCameras) == null
+  const totalCount = clientFiltered ? events.length : serverCount
+  const totalPages = clientFiltered ? 1 : eventsPage?.total_pages ?? 0
 
   const hasActiveFilters = useMemo(
     () =>
-      applied.q.trim() !== "" ||
-      applied.camera !== "all" ||
-      applied.date_from !== "" ||
-      applied.date_to !== "" ||
-      applied.class_name !== "all",
-    [applied]
+      filters.q.trim() !== "" ||
+      filters.camera !== "all" ||
+      filters.date_from !== "" ||
+      filters.date_to !== "" ||
+      filters.class_name !== "all",
+    [filters]
   )
 
-  const applyFilters = () => {
-    setApplied(draft)
-    setPage(1)
+  const updateFilters = (patch: Partial<AppliedFilters>) => {
+    setFilters((f) => ({ ...f, ...patch }))
+    // Immediate controls (not search text) reset paging right away.
+    if (!("q" in patch)) setPage(1)
   }
 
   const clearFilters = () => {
-    setDraft(emptyFilters)
-    setApplied(emptyFilters)
+    setFilters(emptyFilters)
+    setDebouncedQ("")
     setPage(1)
   }
 
@@ -269,7 +387,7 @@ export default function NumberPlateDetectionPage() {
                   Filters
                 </CardTitle>
                 <CardDescription>
-                  Thakot only — filter by date/time, camera, and vehicle class.
+                  Thakot only — filters apply as you change them.
                 </CardDescription>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -283,9 +401,6 @@ export default function NumberPlateDetectionPage() {
                     Clear filters
                   </Button>
                 )}
-                <Button size="sm" onClick={applyFilters}>
-                  Apply filters
-                </Button>
               </div>
             </div>
           </CardHeader>
@@ -298,17 +413,16 @@ export default function NumberPlateDetectionPage() {
                   id="veh-search"
                   className="h-10 w-full pl-9"
                   placeholder="e.g. truck, camera code…"
-                  value={draft.q}
-                  onChange={(e) => setDraft((f) => ({ ...f, q: e.target.value }))}
-                  onKeyDown={(e) => e.key === "Enter" && applyFilters()}
+                  value={filters.q}
+                  onChange={(e) => updateFilters({ q: e.target.value })}
                 />
               </div>
             </div>
             <div className="min-w-0 space-y-2">
               <Label>Camera</Label>
               <Select
-                value={draft.camera}
-                onValueChange={(v) => setDraft((f) => ({ ...f, camera: v }))}
+                value={filters.camera}
+                onValueChange={(v) => updateFilters({ camera: v })}
               >
                 <SelectTrigger className="h-10 w-full">
                   <SelectValue placeholder="All cameras" />
@@ -326,8 +440,8 @@ export default function NumberPlateDetectionPage() {
             <div className="min-w-0 space-y-2">
               <Label>Vehicle class</Label>
               <Select
-                value={draft.class_name}
-                onValueChange={(v) => setDraft((f) => ({ ...f, class_name: v }))}
+                value={filters.class_name}
+                onValueChange={(v) => updateFilters({ class_name: v })}
               >
                 <SelectTrigger className="h-10 w-full">
                   <SelectValue />
@@ -348,8 +462,8 @@ export default function NumberPlateDetectionPage() {
                 id="veh-from"
                 type="datetime-local"
                 className="h-10 w-full"
-                value={draft.date_from}
-                onChange={(e) => setDraft((f) => ({ ...f, date_from: e.target.value }))}
+                value={filters.date_from}
+                onChange={(e) => updateFilters({ date_from: e.target.value })}
               />
             </div>
             <div className="min-w-0 space-y-2">
@@ -358,8 +472,8 @@ export default function NumberPlateDetectionPage() {
                 id="veh-to"
                 type="datetime-local"
                 className="h-10 w-full"
-                value={draft.date_to}
-                onChange={(e) => setDraft((f) => ({ ...f, date_to: e.target.value }))}
+                value={filters.date_to}
+                onChange={(e) => updateFilters({ date_to: e.target.value })}
               />
             </div>
           </CardContent>
